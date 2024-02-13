@@ -12,7 +12,6 @@
     <ProjectReference Include="..\BlazorWebOidc.Client\BlazorWebOidc.Client.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="8.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.0" />
-    <PackageReference Include="Microsoft.IdentityModel.Validators" Version="7.3.1" />
     <PackageReference Include="Microsoft.Extensions.ServiceDiscovery.Yarp" Version="8.0.0-preview.1.23557.2" />
   </ItemGroup>
 

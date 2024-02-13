@@ -3,7 +3,6 @@ using BlazorWebOidc.Client.Weather;
 using BlazorWebOidc.Components;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.IdentityModel.Validators;
 using Yarp.ReverseProxy.Transforms;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -39,8 +38,9 @@ builder.Services.AddAuthentication("MicrosoftOidc")
 
         // The "common" authority should be used for multi-tenant applications. You can also use the common
         // authority for single-tenant applications, but that requires a custom IssuerValidator as shown in the comments below.
-        oidcOptions.Authority = "https://login.microsoftonline.com/common/v2.0/";
-        //oidcOptions.Authority = $"https://login.microsoftonline.com/{oidcConfig["TenantId"]}/v2.0/";
+        //oidcOptions.Authority = "https://login.microsoftonline.com/common/v2.0/";
+        //oidcOptions.Authority = "https://login.microsoftonline.com/{tenant-id}/v2.0/";
+        oidcOptions.Authority = $"https://login.microsoftonline.com/{oidcConfig["TenantId"]}/v2.0/";
         //oidcOptions.ClientId = "{client-id}";
 
         // ClientSecret should not be compiled into the application assembly or checked into source control.
@@ -65,7 +65,7 @@ builder.Services.AddAuthentication("MicrosoftOidc")
         // signin and signout paths must be registered as redirect URIs. The default values are "/signin-oidc" and
         // "/signout-callback-oidc" which could be used instead.
         oidcOptions.CallbackPath = "/signin-microsoft";
-        // Microsoft Identity currently only redirects back to the SignedOutCallbackPath if authority is
+        // Microsoft Identity currently will not redirect back to the SignedOutCallbackPath if authority is
         // https://login.microsoftonline.com/{tenant-id}/v2.0/ as it is above. You can use the "common"
         // authority instead, and logout will redirect back to the blazor app.
         // See https://github.com/AzureAD/microsoft-authentication-library-for-js/issues/5783
@@ -75,9 +75,11 @@ builder.Services.AddAuthentication("MicrosoftOidc")
 
         // Many OIDC provider work with the default issuer validator, but we need to account for the issuer parameterized
         // with "{tenant-id}" returned by https://login.microsoftonline.com/common/v2.0/.well-known/openid-configuration
+        // if we use the "common" authority. If you do not use the "common" authority, you can use the default issuer validator,
+        // but you will not be redirected back to the blazor app after logout.
         // See https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet/issues/1731
-        var microsoftIssuerValidator = AadIssuerValidator.GetAadIssuerValidator(oidcOptions.Authority);
-        oidcOptions.TokenValidationParameters.IssuerValidator = microsoftIssuerValidator.Validate;
+        //var microsoftIssuerValidator = AadIssuerValidator.GetAadIssuerValidator(oidcOptions.Authority);
+        //oidcOptions.TokenValidationParameters.IssuerValidator = microsoftIssuerValidator.Validate;
     })
     .AddCookie("Cookies");
 

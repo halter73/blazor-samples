@@ -3,12 +3,15 @@ using BlazorWebOidc.Client.Weather;
 using BlazorWebOidc.Components;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.IdentityModel.Validators;
 using Yarp.ReverseProxy.Transforms;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add service defaults & Aspire components.
 builder.AddServiceDefaults();
+
+var oidcConfig = builder.Configuration.GetSection("Authentication:Schemes:MicrosoftOidc");
 
 // Add services to the container.
 builder.Services.AddAuthentication("MicrosoftOidc")
@@ -32,13 +35,13 @@ builder.Services.AddAuthentication("MicrosoftOidc")
         oidcOptions.Scope.Add("offline_access");
         // The "Weather.Get" scope is configured in the Azure or Entra portal under "Expose an API".
         // This is necessary for MinimalApiJwt to be able to validate the access token with AddBearerJwt.
-        oidcOptions.Scope.Add("https://{directory-name}.onmicrosoft.com/{client-id}/Weather.Get");
+        oidcOptions.Scope.Add($"{oidcConfig["ApplicationIdUri"]}/Weather.Get");
 
         // The "common" authority should be used for multi-tenant applications. You can also use the common
         // authority for single-tenant applications, but that requires a custom IssuerValidator as shown in the comments below.
-        //oidcOptions.Authority = "https://login.microsoftonline.com/common/v2.0/";
-        oidcOptions.Authority = "https://login.microsoftonline.com/{tenant-id}/v2.0/";
-        oidcOptions.ClientId = "{client-id}";
+        oidcOptions.Authority = "https://login.microsoftonline.com/common/v2.0/";
+        //oidcOptions.Authority = $"https://login.microsoftonline.com/{oidcConfig["TenantId"]}/v2.0/";
+        //oidcOptions.ClientId = "{client-id}";
 
         // ClientSecret should not be compiled into the application assembly or checked into source control.
         // Instead consider user-secrets, Azure KeyVault and/or environment variables. Authentication scheme configuration
@@ -73,8 +76,8 @@ builder.Services.AddAuthentication("MicrosoftOidc")
         // Many OIDC provider work with the default issuer validator, but we need to account for the issuer parameterized
         // with "{tenant-id}" returned by https://login.microsoftonline.com/common/v2.0/.well-known/openid-configuration
         // See https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet/issues/1731
-        //var microsoftIssuerValidator = AadIssuerValidator.GetAadIssuerValidator(oidcOptions.Authority);
-        //oidcOptions.TokenValidationParameters.IssuerValidator = microsoftIssuerValidator.Validate;
+        var microsoftIssuerValidator = AadIssuerValidator.GetAadIssuerValidator(oidcOptions.Authority);
+        oidcOptions.TokenValidationParameters.IssuerValidator = microsoftIssuerValidator.Validate;
     })
     .AddCookie("Cookies");
 

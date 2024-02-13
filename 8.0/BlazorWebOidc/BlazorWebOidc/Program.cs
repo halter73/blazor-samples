@@ -87,7 +87,11 @@ builder.Services.AddAuthentication("MicrosoftOidc")
 // reissue a cookie with the new access token saved inside. If the refresh fails, the user will be signed out.
 builder.Services.ConfigureCookieOidcRefresh("Cookies", "MicrosoftOidc");
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("Weather.Get", policy =>
+    {
+        policy.RequireClaim("http://schemas.microsoft.com/identity/claims/scope", "Weather.Get");
+    });
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
